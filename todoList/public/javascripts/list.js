@@ -31,12 +31,16 @@ function postList(){
   var name = $('#title').val();
   //入力項目を空にする
   $('#title').val('');
-  console.log(name);
+  console.log(name.length);
   // /todoにPOSTアクセスする
+  if(name.length < 31){
   $.post('/addList', {name: name}, function(res){
-    $('#newAdd').append("新しいリストを追加しました。");
+    $('#newAdd').text("新しいリストを追加しました。");
     console.log(res);
-
     getList();
-  });
+    });
+}else{
+  $('#newAdd').text("Listのタイトルは30文字以内で設定してください。");
+}
+
 }

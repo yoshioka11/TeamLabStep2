@@ -99,12 +99,7 @@ app.post('/addTodo',function(req,res){
   }
 });
 
-// app.get('/todo/:id([0-9]+)',function(req,res){
-//   var Todo = mongoose.model('Todo');
-//   Todo.find({},function(err,todos){
-//     res.send(todos);
-//   });
-// });
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
