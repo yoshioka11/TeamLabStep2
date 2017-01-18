@@ -15,7 +15,7 @@ function getList(){
     $.get('/lists', function(lists){
       // 取得したToDoを追加していく
       $.each(lists, function(index, list){
-        $list.append('<li><a href="/todo/'+ list.listId +'">'+ list.title + '</a></li>');
+        $list.append('<li><a href="/todo/id='+ list.listId +'">'+ list.title + '</a></li>');
       });
       // 一覧を表示する
       $list.fadeIn();
@@ -33,7 +33,7 @@ function postList(){
   $('#title').val('');
   console.log(name);
   // /todoにPOSTアクセスする
-  $.post('/todo', {name: name}, function(res){
+  $.post('/addList', {name: name}, function(res){
     $('#newAdd').append("新しいリストを追加しました。");
     console.log(res);
 

@@ -6,5 +6,5 @@ exports.index = function(req,res){
 }
 
 exports.show = function(req,res){
-  res.render('show');
+  res.render('show',{id:req.params.id});
 }

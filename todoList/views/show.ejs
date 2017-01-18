@@ -1,5 +1,12 @@
 <% include header %>
 <p>ToDo中身一覧</p>
+<form id="add">
+  <span>ToDo名</span><input id="content" type="text"  name="contet" placeholder="追加する内容を記入してください。" size="30">
+  <br>
+  <span>期限</span><input id="limit" type="date" name="limit">
+  <input type="hidden" id="listId" value="<%= id %>">
+  <input id="add" type="submit" value="追加">
+</form>
 <ul class='list'>
 </ul>
 <script src='https://code.jquery.com/jquery-2.2.4.min.js'></script>

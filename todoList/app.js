@@ -31,9 +31,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 var Schema = mongoose.Schema;
 var todoSchema = new Schema({
   isCheck     : {type: Boolean, default: false},
-  text        : String,
+  content     : String,
   createdDate : {type: Date, default: Date.now},
-  limitDate   : Date
+  limitDate   : Date,
+  listId      : {type: Number}
 });
 mongoose.model('Todo', todoSchema);
 //一覧スキーマの設計(listID,タイトル,リスト内todoの合計,リスト内チェックされたtodoの合計)
@@ -54,7 +55,7 @@ app.get('/lists',function(req,res){
 
 app.get('/',post.index);
 
-app.post('/todo',function(req,res){
+app.post('/addList',function(req,res){
   var title = req.body.name;
   if(title){
     var List = mongoose.model('List');
@@ -68,14 +69,35 @@ app.post('/todo',function(req,res){
     res.send(false);
   }
 });
-app.get('/todo/:id([0-9]+)',post.show);
+app.get('/todo/id=:id([0-9]+)',post.show);
 
 app.get('/todos',function(req,res){
-    var List = mongoose.model('List');
-    List.find({},function(err,lists){
-    res.send(lists);
+    var listId = (req.query.ids);
+    console.log(req.query.ids);
+    var Todo = mongoose.model('Todo');
+    Todo.find({listId: listId},function(err,todos){
+    res.send(todos);
   });
-  });
+});
+
+app.post('/addTodo',function(req,res){
+  var content = req.body.content;
+  var listId = req.body.listId;
+  var limit = req.body.limit;
+  console.log(limit+listId+content);
+  if(content && listId && limit){
+      var Todo = mongoose.model('Todo');
+      var todo = new Todo();
+      todo.content = content;
+      todo.limitDate = limit;
+      todo.listId = listId;
+      todo.save();
+
+      res.send(true);
+  }else{
+    res.send(false);
+  }
+});
 
 // app.get('/todo/:id([0-9]+)',function(req,res){
 //   var Todo = mongoose.model('Todo');
