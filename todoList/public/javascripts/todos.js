@@ -31,8 +31,6 @@ var ids = $('#listId').val();
       if(todos.length > 0){
         $('#nan').text('');
       $.each(todos, function(index, todo){
-        //titleの表示
-        $('#listTitle').text(todo.title);
         //きれいに表示しようとすると助長だったので変数にしまって整頓した。
         var create = new Date(todo.createdDate),
             createdYear = create.getFullYear(),

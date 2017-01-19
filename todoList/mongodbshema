@@ -1,0 +1,9 @@
+1から順番にターミナルで操作
+
+1,mongo todoList
+2,use todoList
+3,db.createCollection('todos');
+4,db.createCollection('lists');
+
+コレクションチェック
+show collections
