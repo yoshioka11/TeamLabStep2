@@ -108,14 +108,13 @@ app.post('/addTodo',function(req,res,next){
       todo.content = content;
       todo.limitDate = limit;
       todo.listId = listId;
-      //Todoスキーマにtitleを挿入
+      //Titleを取得するために↓
       var List = mongoose.model('List');
       List.find({listId:listId},function(err,up){
       // console.log(up[0].title);
       todo.title = up[0].title;
-      todo.save();
       });
-
+      todo.title;
       todo.save();
       res.send(true);
   //todoが追加された時にlistの合計値を更新する。
@@ -157,7 +156,7 @@ app.post('/update',function(req,res){
   // console.log('fuck!');
   // console.log(checkDate);
   var Todo = mongoose.model('Todo');
-  Todo.update({createdDate:checkDate},{$set:{isCheck:true}},function(err){
+  Todo.update({todoId:checkDate},{$set:{isCheck:true}},function(err){
 });
 //チェックされた数を更新する。押されたタイミングでは0で挿入されてしまうので、初期値を１に設定。
   var listId = req.body.listId;
@@ -177,12 +176,37 @@ app.post('/update',function(req,res){
   });
 
 });
+app.post('/change',function(req,res){
+//checkboxにチェックが入った時にfalseからtrueにupdateする。
+  var checkDate = req.body.checked;
+  // console.log('fuck!');
+  // console.log(checkDate);
+  var Todo = mongoose.model('Todo');
+  Todo.update({todoId:checkDate},{$set:{isCheck:false}},function(err){
+});
+//チェックされた数を更新する。押されたタイミングでは0で挿入されてしまうので、初期値を１に設定。
+  var listId = req.body.listId;
+  Todo.find({listId:listId},function(err,checks){
+    var checkSum = 1;
+    for(var i=0;i<checks.length;i++){
+      if(checks[i].isCheck === true){
+        checkSum++;
+        // console.log('trueなってるでｗ');
+        // console.log(checkSum);
+      }
+    }
+    // console.log('for文抜けたわ'+checkSum);
+    var List = mongoose.model('List');
+     List.update({listId:listId},{$set:{checkSum:checkSum}},function (err){
+     });
+  });
 
+});
 app.get('/searchList',function(req,res){
   var contents = req.query.contents;
   var List = mongoose.model('List');
   //new RegExp(contents)これで正規表現での文字列検索　部分一致で検索に引っかかるように変更
-  List.find({title:new RegExp(contents)},function(err,resultList){
+  List.find({title:new RegExp(contents)},null,{sort:{createdDate:-1}},function(err,resultList){
     res.send(resultList);
   });
 });
@@ -190,7 +214,7 @@ app.get('/searchList',function(req,res){
 app.get('/searchTodo',function(req,res){
   var contents = req.query.contents;
   var Todo = mongoose.model('Todo');
-  Todo.find({content:new RegExp(contents)},function(err,resultTodo){
+  Todo.find({content:new RegExp(contents)},null,{sort:{createdDate:-1}},function(err,resultTodo){
     res.send(resultTodo);
   });
 });
