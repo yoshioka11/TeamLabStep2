@@ -39,9 +39,9 @@ var ids = $('#listId').val();
             limitMonth = limit.getMonth() + 1,
             limitDate = limit.getDate();
             if(todo.isCheck){
-              $list.prepend('<li>' + todo.content +'<br>作成日: '+createdYear+ '年'+createdMonth+'月' +createdDate+'日<br> 期限:' + limitYear + '年' + limitMonth + '月' + limitDate + '日<br><span id='+todo.createdDate+'>完了</span><li>');
+              $list.prepend('<li>' + todo.content +'<br>作成日: '+createdYear+ '年'+createdMonth+'月' +createdDate+'日<br> 期限:' + limitYear + '年' + limitMonth + '月' + limitDate + '日<br><input type="checkbox" checked="checked"><li>');
             }else{
-        $list.prepend('<li>' + todo.content +'<br>作成日: '+createdYear+ '年'+createdMonth+'月' +createdDate+'日<br> 期限:' + limitYear + '年' + limitMonth + '月' + limitDate + '日<br><form class="tes" value="'+todo.createdDate+'"><input type="submit" id="test" value="未完了"></form></li>').css('border','1px solid #ff0000');
+        $list.prepend('<li>' + todo.content +'<br>作成日: '+createdYear+ '年'+createdMonth+'月' +createdDate+'日<br> 期限:' + limitYear + '年' + limitMonth + '月' + limitDate + '日<input class="checks" name="checkbox" type="checkbox" value="'+todo.createdDate+'" onclick="test()"></li>').css('border','1px solid #ff0000');
       }
       });
     }else{
@@ -52,10 +52,6 @@ var ids = $('#listId').val();
     });
   });
 }
-$('#test').submit(function(){
-  console.log('動いてるよ？');
-  return false;
-});
 function addTodo(){
   var listId = $('#listId').val();
   var content = $('#content').val();
@@ -63,5 +59,13 @@ function addTodo(){
   $.post('/addTodo',{content:content,limit:limit,listId:listId},function(res){
       console.log(res);
       getTodo();
+  });
+}
+//checkboxにチェックが入った時に動作。postでいつのデータにチェックが入ったか送信。app.js側で受け取ったデータの時刻でisCheckがupdataされる。
+function test(){
+var nakami = $('.checks').val();
+console.log(nakami+'を送信します。');
+  $.post('/update',{checked:nakami},function(req,res){
+  getTofo();
   });
 }

@@ -117,6 +117,16 @@ Todo.find({listId:listId},function(err,todoSum){
   });
 });
 
+app.post('/update',function(req,res){
+  var checkDate = req.body.checked;
+  console.log('fuck!');
+  console.log(checkDate);
+  var Todo = mongoose.model('Todo');
+  Todo.update({createdDate:checkDate},{$set:{isCheck:true}},function(err){
+
+});
+});
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
