@@ -34,8 +34,10 @@ var todoSchema = new Schema({
   content     : String,
   createdDate : {type: Date, default: Date.now},
   limitDate   : Date,
-  listId      : {type: Number}
+  listId      : {type: Number},
+  title       : String
 });
+todoSchema.plugin(autoIncrement.plugin, {model:'Todo',field:'todoId'});
 mongoose.model('Todo', todoSchema);
 //一覧スキーマの設計(listID,タイトル,リスト内todoの合計,リスト内チェックされたtodoの合計)
 var listSchema = new Schema({
@@ -43,22 +45,30 @@ var listSchema = new Schema({
   sum       : {type: Number},
   checkSum  : {type: Number},
   lastUpDate :{type: Date},
-  most      : Date
+  most      : Date,
+  createdDate : {type: Date, default: Date.now}
 });
+//Listスキーマの中でlistIdをオートインクリメントにするためのコード↓
 listSchema.plugin(autoIncrement.plugin, {model:'List',field:'listId'});
 mongoose.model('List',listSchema);
 
-
+//最後にtodoが作成された順に表示するためのsort
 app.get('/lists',function(req,res){
   var List = mongoose.model('List');
   List.find({},null,{sort:{lastUpDate: -1}},function(err,lists){
     res.send(lists);
    });
+   console.log('test');
   });
 
-
+//getアクセスした時のrouting
 app.get('/',post.index);
 
+
+app.get('/search',post.searchTodo);
+
+
+//postでaddListのリクエストが来た時にデータベースに各データを挿入するためのコード
 app.post('/addList',function(req,res){
   var title = req.body.name;
   if(title){
@@ -73,18 +83,19 @@ app.post('/addList',function(req,res){
     res.send(false);
   }
 });
+//get/todo/idで来た時にpost.showを実行する(idは数字じゃない場合エスケープするようにしてある)
 app.get('/todo/id=:id([0-9]+)',post.show);
 
+//todosにgetアクセスした時にqueryに含まれているidで指定したデータだけ返す。
 app.get('/todos',function(req,res){
-    var listId = (req.query.ids);
-    console.log(req.query.ids);
+    var listId = req.query.ids;
     var Todo = mongoose.model('Todo');
     Todo.find({listId: listId},function(err,todos){
     res.send(todos);
   });
 
 });
-
+//addTodoにpostアクセスした時にToDoスキーマにデータをinsert
 app.post('/addTodo',function(req,res,next){
   var content = req.body.content;
   var listId = req.body.listId;
@@ -97,36 +108,102 @@ app.post('/addTodo',function(req,res,next){
       todo.content = content;
       todo.limitDate = limit;
       todo.listId = listId;
+      //Todoスキーマにtitleを挿入
+      var List = mongoose.model('List');
+      List.find({listId:listId},function(err,up){
+      // console.log(up[0].title);
+      todo.title = up[0].title;
+      todo.save();
+      });
+
       todo.save();
       res.send(true);
+  //todoが追加された時にlistの合計値を更新する。
+  Todo.find({listId:listId},function(err,todoSum){
+    if(todoSum.length > 0){
+  var sums = todoSum.length+1;
+  // console.log('listの中には'+sums+'個入っています');
 
+  //最終更新日の取得
+  var newCreate = todoSum[todoSum.length-1].createdDate;
+  newCreate= new Date(newCreate);
+  //console.log(todoSum[todoSum.length-1].createdDate);
+  var checkSum = 0;
+  for(var i=0;i<todoSum.length;i++){
+    if(todoSum[i].isCheck === true){
+      checkSum++;
+      // console.log('trueなってるでｗ');
+      // console.log(checkSum);
+    }
+  }
+  // console.log('for文抜けたわ'+checkSum);
+  //取得した合計と作成日のUpdate
+  var List = mongoose.model('List');
+   List.update({listId:listId},{$set:{sum:sums,lastUpDate:newCreate,checkSum:checkSum}},function (err){
+   });
+   console.log('成功');
+ }else{
+   console.log('失敗');
+ }
+  });
   }else{
     res.send(false);
   }
-//todoが追加された時にlistの合計値を更新する。
-Todo.find({listId:listId},function(err,todoSum){
-  var sums = todoSum.length+1;
-  console.log(sums);
-  var newCreate = todoSum[todoSum.length-1].createdDate;
-  newCreate= new Date(newCreate);
-  console.log(todoSum[todoSum.length-1].createdDate);
-  //取得した合計と作成日のUpdate
-  var List = mongoose.model('List');
-   List.update({listId:listId},{$set:{sum:sums,lastUpDate:newCreate}},function (err){
-   });
-  });
 });
 
 app.post('/update',function(req,res){
+//checkboxにチェックが入った時にfalseからtrueにupdateする。
   var checkDate = req.body.checked;
-  console.log('fuck!');
-  console.log(checkDate);
+  // console.log('fuck!');
+  // console.log(checkDate);
   var Todo = mongoose.model('Todo');
   Todo.update({createdDate:checkDate},{$set:{isCheck:true}},function(err){
+});
+//チェックされた数を更新する。押されたタイミングでは0で挿入されてしまうので、初期値を１に設定。
+  var listId = req.body.listId;
+  Todo.find({listId:listId},function(err,checks){
+    var checkSum = 1;
+    for(var i=0;i<checks.length;i++){
+      if(checks[i].isCheck === true){
+        checkSum++;
+        // console.log('trueなってるでｗ');
+        // console.log(checkSum);
+      }
+    }
+    // console.log('for文抜けたわ'+checkSum);
+    var List = mongoose.model('List');
+     List.update({listId:listId},{$set:{checkSum:checkSum}},function (err){
+     });
+  });
 
 });
+
+app.get('/searchList',function(req,res){
+  var contents = req.query.contents;
+  var List = mongoose.model('List');
+  //new RegExp(contents)これで正規表現での文字列検索　部分一致で検索に引っかかるように変更
+  List.find({title:new RegExp(contents)},function(err,resultList){
+    res.send(resultList);
+  });
 });
 
+app.get('/searchTodo',function(req,res){
+  var contents = req.query.contents;
+  var Todo = mongoose.model('Todo');
+  Todo.find({content:new RegExp(contents)},function(err,resultTodo){
+    res.send(resultTodo);
+  });
+});
+
+app.post('/getTitle',function(req,res){
+  var ids = req.body.title;
+  console.log(ids);
+  var List = mongoose.model('List');
+  List.find({listId:ids},function(err,title){
+    console.log(title);
+    res.send(title);
+  });
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
