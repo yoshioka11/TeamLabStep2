@@ -51,6 +51,7 @@ app.get('/lists',function(req,res){
   List.find({},function(err,lists){
     res.send(lists);
   });
+
 });
 
 app.get('/',post.index);
@@ -84,16 +85,26 @@ app.post('/addTodo',function(req,res){
   var content = req.body.content;
   var listId = req.body.listId;
   var limit = req.body.limit;
-  console.log(limit+listId+content);
+  var sums = 0;
+  var Todo = mongoose.model('Todo');
+  var todo = new Todo();
+
+  console.log('{limit:'+limit+',listId:'+listId+',content:'+content+'}');
   if(content && listId && limit){
-      var Todo = mongoose.model('Todo');
-      var todo = new Todo();
       todo.content = content;
       todo.limitDate = limit;
       todo.listId = listId;
       todo.save();
-
       res.send(true);
+      //todoが追加された時にlistの合計値を更新する。
+  Todo.find({listId:listId},function(err,test){
+    sums = test.length;
+    console.log(test.length);
+    var List = mongoose.model('List');
+    List.update({listId:listId},{$set:{sum:sums}},function (err){
+    });
+});
+
   }else{
     res.send(false);
   }
