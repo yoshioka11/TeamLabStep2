@@ -15,7 +15,7 @@ function getList(){
     $.get('/lists', function(lists){
       // 取得したToDoを追加していく
       $.each(lists, function(index, list){
-        $list.append('<li><a href="/todo/id='+ list.listId +'">'+ list.title + '</a></li>');
+        $list.append('<li><a href="/todo/id='+ list.listId +'">'+ list.title + '</a><br><span>'+list.sum+'個中'+list.checkSum+'個がチェック済</span></li>');
       });
       // 一覧を表示する
       $list.fadeIn();

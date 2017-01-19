@@ -41,18 +41,21 @@ mongoose.model('Todo', todoSchema);
 var listSchema = new Schema({
   title     : String,
   sum       : {type: Number},
-  checkSum  : {type: Number}
+  checkSum  : {type: Number},
+  lastUpDate :{type: Date},
+  most      : Date
 });
 listSchema.plugin(autoIncrement.plugin, {model:'List',field:'listId'});
 mongoose.model('List',listSchema);
 
+
 app.get('/lists',function(req,res){
   var List = mongoose.model('List');
-  List.find({},function(err,lists){
+  List.find({},null,{sort:{lastUpDate: -1}},function(err,lists){
     res.send(lists);
+   });
   });
 
-});
 
 app.get('/',post.index);
 
@@ -79,13 +82,13 @@ app.get('/todos',function(req,res){
     Todo.find({listId: listId},function(err,todos){
     res.send(todos);
   });
+
 });
 
-app.post('/addTodo',function(req,res){
+app.post('/addTodo',function(req,res,next){
   var content = req.body.content;
   var listId = req.body.listId;
   var limit = req.body.limit;
-  var sums = 0;
   var Todo = mongoose.model('Todo');
   var todo = new Todo();
 
@@ -96,18 +99,22 @@ app.post('/addTodo',function(req,res){
       todo.listId = listId;
       todo.save();
       res.send(true);
-      //todoが追加された時にlistの合計値を更新する。
-  Todo.find({listId:listId},function(err,test){
-    sums = test.length;
-    console.log(test.length);
-    var List = mongoose.model('List');
-    List.update({listId:listId},{$set:{sum:sums}},function (err){
-    });
-});
 
   }else{
     res.send(false);
   }
+//todoが追加された時にlistの合計値を更新する。
+Todo.find({listId:listId},function(err,todoSum){
+  var sums = todoSum.length+1;
+  console.log(sums);
+  var newCreate = todoSum[todoSum.length-1].createdDate;
+  newCreate= new Date(newCreate);
+  console.log(todoSum[todoSum.length-1].createdDate);
+  //取得した合計と作成日のUpdate
+  var List = mongoose.model('List');
+   List.update({listId:listId},{$set:{sum:sums,lastUpDate:newCreate}},function (err){
+   });
+  });
 });
 
 
