@@ -6,6 +6,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var post = require('./routes/post')
 var mongoose = require('mongoose');
+var date = require('date-utils');
 var connection = mongoose.connect('mongodb://localhost/todoList');
 //DBのlistIDでauto incrementを使いたいので定義
 var autoIncrement = require("mongoose-auto-increment");
@@ -68,7 +69,7 @@ app.get('/',post.index);
 app.get('/search',post.searchTodo);
 
 
-//postでaddListのリクエストが来た時にデータベースに各データを挿入するためのコード
+//postでbListのリクエストが来た時にデータベースに各データを挿入するためのコード
 app.post('/addList',function(req,res){
   var title = req.body.name;
   if(title){
@@ -114,48 +115,53 @@ app.post('/addTodo',function(req,res,next){
       //todoが空でもtitleが取得出来るようにとTop画面で直近の期限を表示出来るように
       var List = mongoose.model('List');
       List.find({listId:listId},function(err,up){
-        var limitDate = new Date(limit);
-        if(b > limitDate){
-        List.update({listId:listId},{most:limit},{upsert:true},function(err){
-        });
-      }
       todo.title = up[0].title;
       });
       todo.title;
       todo.save();
-
+console.log('-----');
       Todo.find({listId:listId},function(err,up){
-        a = up[0].limitDate;
-        b = up[1].limitDate;
-        a = new Date(a);
-        b = new Date(b);
+        console.log('-----');
+        console.log(listId);
+        if(up.length>0){
+        checkA = up[0].limitDate;
+        if(up.length>1){
+        checkB = up[1].limitDate;
+      }
+        checkA = new Date(checkA);
+        checkB = new Date(checkB);
         for(var i=0;i<up.length;i++){
           if(up[i].isCheck == false){
-            a = up[i].limitDate;
-            a = new Date(a);
-            if(a<b){
-              b = a;
+            checkA = up[i].limitDate;
+            checkA = new Date(checkA);
+            if(checkA<checkB){
+              checkB = checkA;
             }
           }
         }
-      console.log(b);
-      });
+        console.log('-----');
+      console.log(checkB);
+      console.log('-----');
+    }
+});
 
       List.find({listId:listId},function(err,up){
         var limitDate = new Date(limit);
-        if(b > limitDate){
-        List.update({listId:listId},{most:limit},{upsert:true},function(err){
+        if(checkB > limitDate){
+          List.update({listId:listId},{most:limitDate},{upsert:true},function(err){
+          });
+      }else{
+        List.update({listId:listId},{most:checkB},{upsert:true},function(err){
         });
       }
       });
-
-
+      console.log('yeaaaaaaaaaaa');
       res.send(true);
   //todoが追加された時にlistの合計値を更新する。
   Todo.find({listId:listId},function(err,todoSum){
     if(todoSum.length > 0){
-  var sums = todoSum.length+1;
-  // console.log('listの中には'+sums+'個入っています');
+  var sums = todoSum.length + 1;
+
 
   //最終更新日の取得
   var newCreate = todoSum[todoSum.length-1].createdDate;
@@ -165,24 +171,26 @@ app.post('/addTodo',function(req,res,next){
   for(var i=0;i<todoSum.length;i++){
     if(todoSum[i].isCheck === true){
       checkSum++;
-      // console.log('trueなってるでｗ');
-      // console.log(checkSum);
     }
   }
-  // console.log('for文抜けたわ'+checkSum);
   //取得した合計と作成日のUpdate
   var List = mongoose.model('List');
    List.update({listId:listId},{$set:{sum:sums,lastUpDate:newCreate,checkSum:checkSum}},function (err){
    });
-   console.log('成功');
+
  }else{
-   console.log('失敗');
+   //初回投稿時のみデータを手動で挿入。
+   var List = mongoose.model('List');
+    List.update({listId:listId},{$set:{sum:1,lastUpDate:Date.now(),most:limit}},function (err){
+    });
+
  }
   });
   }else{
     res.send(false);
   }
 });
+
 
 app.post('/update',function(req,res){
 //checkboxにチェックが入った時にfalseからtrueにupdateする。
@@ -198,7 +206,7 @@ app.post('/update',function(req,res){
 //チェックされた数を更新する。押されたタイミングでは0で挿入されてしまうので、初期値を１に設定。
   var listId = req.body.listId;
   Todo.find({listId:listId},function(err,checks){
-    var checkSum = 1;
+    var checkSum = 0;
     for(var i=0;i<checks.length;i++){
       if(checks[i].isCheck === true){
         checkSum++;
@@ -218,21 +226,23 @@ app.post('/change',function(req,res){
   var checkDate = req.body.checked;
   // console.log('fuck!');
   // console.log(checkDate);
+  for(var i=0;i<checkDate.length;i++){
   var Todo = mongoose.model('Todo');
-  Todo.update({todoId:checkDate},{$set:{isCheck:false}},function(err){
+  Todo.update({todoId:checkDate[i]},{$set:{isCheck:false}},function(err){
 });
+}
 //チェックされた数を更新する。押されたタイミングでは0で挿入されてしまうので、初期値を１に設定。
   var listId = req.body.listId;
   Todo.find({listId:listId},function(err,checks){
-    var checkSum = 1;
+    var checkSum = 0;
     for(var i=0;i<checks.length;i++){
       if(checks[i].isCheck === true){
         checkSum++;
-        // console.log('trueなってるでｗ');
-        // console.log(checkSum);
+        console.log('trueなってるでｗ');
+        console.log(checkSum);
       }
     }
-    // console.log('for文抜けたわ'+checkSum);
+
     var List = mongoose.model('List');
      List.update({listId:listId},{$set:{checkSum:checkSum}},function (err){
      });

@@ -22,7 +22,7 @@ function getList(){
             mostDate = most.getDate();
 
         if(!(Number(mostYear))){
-        $list.append('<li><a href="/todo/id='+ list.listId +'">'+ valueEscape(list.title) + '</a><br><span>'+list.sum+'個中'+list.checkSum+'個がチェック済</span></li>');
+        $list.append('<li><a href="/todo/id='+ list.listId +'">'+ valueEscape(list.title) + '</a><br><span>ToDoがありません。</span></li>');
         }else{
         $list.append('<li><a href="/todo/id='+ list.listId +'">'+ valueEscape(list.title) + '</a><br><span>'+list.sum+'個中'+list.checkSum+'個がチェック済</span><br>~'+mostYear+'年'+mostMonth+'月'+mostDate+'日</li>');
 }

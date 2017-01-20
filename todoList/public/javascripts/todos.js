@@ -76,6 +76,7 @@ function addTodo(){
   console.log(content.length);
     if(content.length<31 && content.length > 0){
   var limit = new Date($('#limit').val());
+  console.log(limit);
   $.post('/addTodo',{content:content,limit:limit,listId:listId},function(res){
       console.log(res);
       getTodo();
@@ -115,7 +116,6 @@ for(var i=0;check>=i;i++){
 
   }else{
     chekers.push(i);
-    console.log(i+"個目のチェックが外れました");
   }
 }
 console.log(chekers+'を送信します。');
