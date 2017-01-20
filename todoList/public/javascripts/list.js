@@ -14,8 +14,18 @@ function getList(){
     // /listsにGETアクセスする
     $.get('/lists', function(lists){
       // 取得したToDoを追加していく
+      var i = 0;
       $.each(lists, function(index, list){
+        var most = new Date(list.most),
+            mostYear = most.getFullYear(),
+            mostMonth = most.getMonth() + 1,
+            mostDate = most.getDate();
+
+        if(!(Number(mostYear))){
         $list.append('<li><a href="/todo/id='+ list.listId +'">'+ valueEscape(list.title) + '</a><br><span>'+list.sum+'個中'+list.checkSum+'個がチェック済</span></li>');
+        }else{
+        $list.append('<li><a href="/todo/id='+ list.listId +'">'+ valueEscape(list.title) + '</a><br><span>'+list.sum+'個中'+list.checkSum+'個がチェック済</span><br>~'+mostYear+'年'+mostMonth+'月'+mostDate+'日</li>');
+}
       });
       // 一覧を表示する
       $list.fadeIn();

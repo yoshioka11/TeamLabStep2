@@ -102,20 +102,54 @@ app.post('/addTodo',function(req,res,next){
   var limit = req.body.limit;
   var Todo = mongoose.model('Todo');
   var todo = new Todo();
-
+  var checkA = 0;
+  var checkB = 0;
   console.log('{limit:'+limit+',listId:'+listId+',content:'+content+'}');
   if(content && listId && limit){
       todo.content = content;
       todo.limitDate = limit;
       todo.listId = listId;
-      //Titleを取得するために↓
+
+
+      //todoが空でもtitleが取得出来るようにとTop画面で直近の期限を表示出来るように
       var List = mongoose.model('List');
       List.find({listId:listId},function(err,up){
-      // console.log(up[0].title);
+        var limitDate = new Date(limit);
+        if(b > limitDate){
+        List.update({listId:listId},{most:limit},{upsert:true},function(err){
+        });
+      }
       todo.title = up[0].title;
       });
       todo.title;
       todo.save();
+
+      Todo.find({listId:listId},function(err,up){
+        a = up[0].limitDate;
+        b = up[1].limitDate;
+        a = new Date(a);
+        b = new Date(b);
+        for(var i=0;i<up.length;i++){
+          if(up[i].isCheck == false){
+            a = up[i].limitDate;
+            a = new Date(a);
+            if(a<b){
+              b = a;
+            }
+          }
+        }
+      console.log(b);
+      });
+      
+      List.find({listId:listId},function(err,up){
+        var limitDate = new Date(limit);
+        if(b > limitDate){
+        List.update({listId:listId},{most:limit},{upsert:true},function(err){
+        });
+      }
+      });
+
+
       res.send(true);
   //todoが追加された時にlistの合計値を更新する。
   Todo.find({listId:listId},function(err,todoSum){
