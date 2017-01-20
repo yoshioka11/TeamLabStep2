@@ -119,10 +119,8 @@ app.post('/addTodo',function(req,res,next){
       });
       todo.title;
       todo.save();
-console.log('-----');
+
       Todo.find({listId:listId},function(err,up){
-        console.log('-----');
-        console.log(listId);
         if(up.length>0){
         checkA = up[0].limitDate;
         if(up.length>1){
@@ -139,9 +137,6 @@ console.log('-----');
             }
           }
         }
-        console.log('-----');
-      console.log(checkB);
-      console.log('-----');
     }
 });
 
@@ -155,7 +150,6 @@ console.log('-----');
         });
       }
       });
-      console.log('yeaaaaaaaaaaa');
       res.send(true);
   //todoが追加された時にlistの合計値を更新する。
   Todo.find({listId:listId},function(err,todoSum){
@@ -166,7 +160,8 @@ console.log('-----');
   //最終更新日の取得
   var newCreate = todoSum[todoSum.length-1].createdDate;
   newCreate= new Date(newCreate);
-  //console.log(todoSum[todoSum.length-1].createdDate);
+
+  //chcke数の取得
   var checkSum = 0;
   for(var i=0;i<todoSum.length;i++){
     if(todoSum[i].isCheck === true){
@@ -193,6 +188,8 @@ console.log('-----');
 
 
 app.post('/update',function(req,res){
+
+
 //checkboxにチェックが入った時にfalseからtrueにupdateする。
   var checkDate = req.body.checked;
 
@@ -210,19 +207,17 @@ app.post('/update',function(req,res){
     for(var i=0;i<checks.length;i++){
       if(checks[i].isCheck === true){
         checkSum++;
-        // console.log('trueなってるでｗ');
-        // console.log(checkSum);
       }
     }
-    // console.log('for文抜けたわ'+checkSum);
     var List = mongoose.model('List');
      List.update({listId:listId},{$set:{checkSum:checkSum}},function (err){
      });
   });
 
 });
+
 app.post('/change',function(req,res){
-//checkboxにチェックが入った時にfalseからtrueにupdateする。
+//checkboxにチェックがはずれたときににtrueからfalseにupdateする。
   var checkDate = req.body.checked;
   // console.log('fuck!');
   // console.log(checkDate);
@@ -231,15 +226,13 @@ app.post('/change',function(req,res){
   Todo.update({todoId:checkDate[i]},{$set:{isCheck:false}},function(err){
 });
 }
-//チェックされた数を更新する。押されたタイミングでは0で挿入されてしまうので、初期値を１に設定。
+//チェックされた数を更新する。
   var listId = req.body.listId;
   Todo.find({listId:listId},function(err,checks){
     var checkSum = 0;
     for(var i=0;i<checks.length;i++){
       if(checks[i].isCheck === true){
         checkSum++;
-        console.log('trueなってるでｗ');
-        console.log(checkSum);
       }
     }
 
@@ -249,6 +242,8 @@ app.post('/change',function(req,res){
   });
 
 });
+
+//Listの検索
 app.get('/searchList',function(req,res){
   var contents = req.query.contents;
   var List = mongoose.model('List');
@@ -257,7 +252,7 @@ app.get('/searchList',function(req,res){
     res.send(resultList);
   });
 });
-
+//todoの検索
 app.get('/searchTodo',function(req,res){
   var contents = req.query.contents;
   var Todo = mongoose.model('Todo');
@@ -266,12 +261,11 @@ app.get('/searchTodo',function(req,res){
   });
 });
 
+//showでのtitleの取得
 app.post('/getTitle',function(req,res){
   var ids = req.body.title;
-  console.log(ids);
   var List = mongoose.model('List');
   List.find({listId:ids},function(err,title){
-    console.log(title);
     res.send(title);
   });
 });

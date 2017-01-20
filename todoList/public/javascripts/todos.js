@@ -107,22 +107,23 @@ console.log(chekers+'を送信します。');
 }
 
 function change(){
-var chekers = [];
-var nakami = $('.checks').val();
-var listId = $('#listId').val();
-console.log('check='+check);
-for(var i=0;check>=i;i++){
-  if($('[name=checkbox'+i+']').prop("checked")){
+  var chekers = [];
+  var nakami = $('.checks').val();
+  var listId = $('#listId').val();
 
-  }else{
-    chekers.push(i);
+  for(var i=0;check>=i;i++){
+    if($('[name=checkbox'+i+']').prop("checked")){
+
+    }else{
+     chekers.push(i);
+     //このページに存在しないIDのものは弾く予定でした。
   }
 }
-console.log(chekers+'を送信します。');
+
   $.post('/change',{checked:chekers,listId:listId},function(req,res){
-  getTodo();
+    getTodo();
   });
-  getTodo();
+    getTodo();
 }
 
 //エスケープ関数

@@ -20,12 +20,12 @@ function getList(){
             mostYear = most.getFullYear(),
             mostMonth = most.getMonth() + 1,
             mostDate = most.getDate();
-
+        //日付がないものはtodoがないと表示する。
         if(!(Number(mostYear))){
-        $list.append('<li><a href="/todo/id='+ list.listId +'">'+ valueEscape(list.title) + '</a><br><span>ToDoがありません。</span></li>');
+          $list.append('<li><a href="/todo/id='+ list.listId +'">'+ valueEscape(list.title) + '</a><br><span>ToDoがありません。</span></li>');
         }else{
-        $list.append('<li><a href="/todo/id='+ list.listId +'">'+ valueEscape(list.title) + '</a><br><span>'+list.sum+'個中'+list.checkSum+'個がチェック済</span><br>~'+mostYear+'年'+mostMonth+'月'+mostDate+'日</li>');
-}
+          $list.append('<li><a href="/todo/id='+ list.listId +'">'+ valueEscape(list.title) + '</a><br><span>'+list.sum+'個中'+list.checkSum+'個がチェック済</span><br>~'+mostYear+'年'+mostMonth+'月'+mostDate+'日</li>');
+        }
       });
       // 一覧を表示する
       $list.fadeIn();
@@ -44,17 +44,18 @@ function postList(){
   console.log(name.length);
   // /todoにPOSTアクセスする
   if(name.length < 31 && name.length > 0){
-  $.post('/addList', {name: name}, function(res){
-    $('#newAdd').text("新しいリストを追加しました。");
-    console.log(res);
-    getList();
-    });
-}else{
-  $('#newAdd').text("Listのタイトルは30文字以内で設定してください。");
-}
+      $.post('/addList', {name: name}, function(res){
+        $('#newAdd').text("新しいリストを追加しました。");
+        console.log(res);
+        getList();
+      });
+  }else{
+    $('#newAdd').text("Listのタイトルは30文字以内で設定してください。");
+  }
 
 }
 
+//エスケープ関数
 function valueEscape(val){
     return val.replace(/[ !"#$%&'()*+,.\/:;<=>?@\[\\\]^`{|}~]/g, '\\$&');
 }
