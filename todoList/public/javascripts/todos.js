@@ -95,10 +95,9 @@ console.log('check='+check);
 for(var i=0;check>=i;i++){
   if($('[name=checkbox'+i+']').prop("checked")){
     chekers.push(i);
-    console.log(i+"個目がチェックされてるよ");
+    console.log(chekers);
   }
 }
-console.log(listId+'も送信します。');
 console.log(chekers+'を送信します。');
   $.post('/update',{checked:chekers,listId:listId},function(req,res){
   getTodo();
@@ -106,26 +105,25 @@ console.log(chekers+'を送信します。');
   getTodo();
 }
 
-// function change(){
-// var chekers = 0;
-// var nakami = $('.checks').val();
-// var listId = $('#listId').val();
-// console.log('check='+check);
-// for(var i=0;check>=i;i++){
-//   if($('[name=checkbox'+i+']').prop("checked")){
-//
-//   }else{
-//     chekers = i;
-//     console.log(i+"個目のチェックが外れました");
-//   }
-// }
-// console.log(listId+'も送信します。');
-// console.log(chekers+'を送信します。');
-//   $.post('/change',{checked:chekers,listId:listId},function(req,res){
-//   getTodo();
-//   });
-//   getTodo();
-// }
+function change(){
+var chekers = [];
+var nakami = $('.checks').val();
+var listId = $('#listId').val();
+console.log('check='+check);
+for(var i=0;check>=i;i++){
+  if($('[name=checkbox'+i+']').prop("checked")){
+
+  }else{
+    chekers.push(i);
+    console.log(i+"個目のチェックが外れました");
+  }
+}
+console.log(chekers+'を送信します。');
+  $.post('/change',{checked:chekers,listId:listId},function(req,res){
+  getTodo();
+  });
+  getTodo();
+}
 
 //エスケープ関数
 function valueEscape(val){

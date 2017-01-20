@@ -140,7 +140,7 @@ app.post('/addTodo',function(req,res,next){
         }
       console.log(b);
       });
-      
+
       List.find({listId:listId},function(err,up){
         var limitDate = new Date(limit);
         if(b > limitDate){
@@ -187,11 +187,14 @@ app.post('/addTodo',function(req,res,next){
 app.post('/update',function(req,res){
 //checkboxにチェックが入った時にfalseからtrueにupdateする。
   var checkDate = req.body.checked;
+
   // console.log('fuck!');
   // console.log(checkDate);
+  for(var i=0;i<checkDate.length;i++){
   var Todo = mongoose.model('Todo');
-  Todo.update({todoId:checkDate},{$set:{isCheck:true}},function(err){
+  Todo.update({todoId:checkDate[i]},{$set:{isCheck:true}},function(err){
 });
+}
 //チェックされた数を更新する。押されたタイミングでは0で挿入されてしまうので、初期値を１に設定。
   var listId = req.body.listId;
   Todo.find({listId:listId},function(err,checks){
