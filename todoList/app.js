@@ -46,7 +46,7 @@ var listSchema = new Schema({
   sum       : {type: Number},
   checkSum  : {type: Number},
   lastUpDate :{type: Date},
-  most      : Date,
+  most      : {type: Date},
   createdDate : {type: Date, default: Date.now}
 });
 //Listスキーマの中でlistIdをオートインクリメントにするためのコード↓
@@ -72,10 +72,9 @@ app.get('/search',post.searchTodo);
 
 //postでbListのリクエストが来た時にデータベースに各データを挿入するためのコード
 app.post('/addList',function(req,res){
+  var list = new List();
   var title = req.body.name;
-  console.log("動いてる？");
   if(title){
-    var list = new List();
     list.title = title;
     list.sum = 0;
     list.checkSum = 0;
@@ -109,31 +108,40 @@ app.post('/addTodo',function(req,res,next){
   if(content && listId && limit){
     //取得したデータを挿入する。
     var step1 = function(callback){
-    	  todo.content = content;
+      	  todo.content = content;
           todo.limitDate = limit;
           todo.listId = listId;
-
-
           //todoが空でもtitleが取得出来るようにとTop画面で直近の期限を表示出来るように
           List.find({listId:listId},function(err,up){
           todo.title = up[0].title;
           });
           todo.title;
           todo.save();
-
+          var test = new Date(limit);
+          List.update({listId:listId},{$set:{most:test}},function(err){
+              });
           console.log("step1"+true);
           console.log('{limit:'+limit+',listId:'+listId+',content:'+content+'}');
           setTimeout(callback,300);
     }
     //期限が一番近いものかどうかのチェック。
 var step2 = function(callback){
-	      Todo.find({listId:listId},function(err,up){
-
-        if(up.length>0){
-        checkA = up[0].limitDate;
-        checkA = new Date(checkA);
+        /*これはなぜか正常に動かない。
         List.update({listId:listId},{most:limit},{upsert:true},function(err){
         });
+        */
+	      Todo.find({listId:listId},function(err,up){
+        if(up.length>0){
+        console.log("ここウギてる？");
+        /*これはなぜか正常に動かない。
+        List.update({listId:listId},{most:limit},{upsert:true},function(err){
+        });
+        */
+        checkA = up[0].limitDate;
+        checkA = new Date(checkA);
+        console.log("checkA"+checkA);
+        console.log("listId"+listId);
+        console.log("limit"+limit);
         if(up.length>1){
         checkB = up[1].limitDate;
         checkB = new Date(checkB);
@@ -149,6 +157,7 @@ var step2 = function(callback){
           }
         }
     }
+
 });
 //登録されたtodoのチェックしたのが近ければtrue,そうでなければfalse
       List.find({listId:listId},function(err,up){
@@ -157,12 +166,14 @@ var step2 = function(callback){
         console.log("limit="+limit);
         console.log("ce"+checkB);
         if(checkB > limitDate){
-          List.update({listId:listId},{most:limitDate},{upsert:true},function(err){
-          });
-      }else{
-        List.update({listId:listId},{most:checkB},{upsert:true},function(err){
-        });
-      }
+          //これも正常に動く。
+            List.update({listId:listId},{most:limitDate},{upsert:true},function(err){
+            });
+        }else{
+          //これも正常に動く。
+            List.update({listId:listId},{most:checkB},{upsert:true},function(err){
+            });
+        }
       });
       console.log("step2:"+true);
       setTimeout(callback,100);
@@ -188,9 +199,14 @@ var step3 = function(callback){
     }
   }
   //取得した合計と作成日のUpdate
+  if(sums==1){
+    List.update({listId:listId},{$set:{sum:sums,lastUpDate:newCreate,checkSum:checkSum,most:limit}},function (err){
+    });
+
+  }else{
    List.update({listId:listId},{$set:{sum:sums,lastUpDate:newCreate,checkSum:checkSum}},function (err){
    });
-
+}
 });
 console.log("step3:"+true);
 setTimeout(callback,100);
