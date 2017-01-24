@@ -44,10 +44,12 @@ var ids = $('#listId').val();
             limitMonth = limit.getMonth() + 1,
             limitDate = limit.getDate();
             if(todo.isCheck){
-               $list.prepend('<li>' + valueEscape(todo.content) +'<br>作成日: '+createdYear+ '年'+createdMonth+'月' +createdDate+'日<br> 期限:' + limitYear + '年' + limitMonth + '月' + limitDate + '日<input class="checks" id="'+todo.todoId+'" name="checkbox'+todo.todoId+'" type="checkbox" value="'+todo.createdDate+'" onclick="change()" checked="checked"><li>').css('border','1px solid #ff0000');
+
+               $list.prepend('<li>' + valueEscape(todo.content) +'<br>作成日: '+createdYear+ '年'+createdMonth+'月' +createdDate+'日<br> 期限:' + limitYear + '年' + limitMonth + '月' + limitDate + '日<input class="checks" id="'+todo.todoId+'" name="checkbox'+todo.todoId+'" type="checkbox" value="'+todo.createdDate+'" onclick="change()" checked="checked">完了</li>');
             }else{
-         $list.prepend('<li>' + valueEscape(todo.content) +'<br>作成日: '+createdYear+ '年'+createdMonth+'月' +createdDate+'日<br> 期限:' + limitYear + '年' + limitMonth + '月' + limitDate + '日<input class="checks" id="'+todo.todoId+'" name="checkbox'+todo.todoId+'" type="checkbox" value="'+todo.createdDate+'" onclick="done()"></li>').css('border','1px solid #ff0000');
-      }
+
+               $list.prepend('<li>' + valueEscape(todo.content) +'<br>作成日: '+createdYear+ '年'+createdMonth+'月' +createdDate+'日<br> 期限:' + limitYear + '年' + limitMonth + '月' + limitDate + '日<input class="checks" id="'+todo.todoId+'" name="checkbox'+todo.todoId+'" type="checkbox" value="'+todo.createdDate+'" onclick="done()">未完了</li>');
+            }
       });
     }else{
       $('#nan').text('登録されたToDoはありません。').css('color','red');
@@ -73,14 +75,23 @@ function getTitle(){
 function addTodo(){
   var listId = $('#listId').val();
   var content = $('#content').val();
-  console.log(content.length);
-    if(content.length<31 && content.length > 0){
   var limit = new Date($('#limit').val());
-  console.log(limit);
-  $.post('/addTodo',{content:content,limit:limit,listId:listId},function(res){
-      console.log(res);
-      getTodo();
+  console.log(content.length);
+  //投稿前に重複していないかのチェック。
+if(content.length<31 && content.length > 0){
+  console.log("動いてる1");
+  $.post('/addCheck',{listId:listId,content:content,limit:limit},function(res){
+    console.log("動いてる2");
+      if(res){
+        $.post('/addTodo',{content:content,limit:limit,listId:listId},function(res){
+              console.log(res);
+              getTodo();
+          });
+      }else{
+      $('#angry').text("内容が重複しています。");
+      }
   });
+  console.log(limit);
     }else{
       $('#angry').text("１文字以上,30文字以内で入力してください");
     }
@@ -112,14 +123,17 @@ function change(){
   var listId = $('#listId').val();
 
   for(var i=0;check>=i;i++){
-    if($('[name=checkbox'+i+']').prop("checked")){
-
-    }else{
-     chekers.push(i);
-     //このページに存在しないIDのものは弾く予定でした。
+    var test = $('#'+i).val();
+    if(test){
+    console.log("データがあるよ。");
+    if(!($('[name=checkbox'+i+']').prop("checked"))){
+      chekers.push(i);
+    }
+  }else{
+    console.log("データがないよ。");
   }
 }
-
+  console.log(chekers+"を送信します。");
   $.post('/change',{checked:chekers,listId:listId},function(req,res){
     getTodo();
   });

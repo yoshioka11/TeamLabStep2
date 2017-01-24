@@ -47,7 +47,7 @@ function postList(){
       $.post('/addList', {name: name}, function(res){
         $('#newAdd').text("新しいリストを追加しました。");
         console.log(res);
-        getList();
+        setTimeout(getList,400);
       });
   }else{
     $('#newAdd').text("Listのタイトルは30文字以内で設定してください。");

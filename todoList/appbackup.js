@@ -73,7 +73,6 @@ app.get('/search',post.searchTodo);
 //postでbListのリクエストが来た時にデータベースに各データを挿入するためのコード
 app.post('/addList',function(req,res){
   var title = req.body.name;
-  console.log("動いてる？");
   if(title){
     var list = new List();
     list.title = title;
@@ -91,12 +90,11 @@ app.get('/todo/id=:id([0-9]+)',post.show);
 //todosにgetアクセスした時にqueryに含まれているidで指定したデータだけ返す。
 app.get('/todos',function(req,res){
     var listId = req.query.ids;
-    var sum = 0;
     Todo.find({listId: listId},function(err,todos){
-      res.send(todos);
-    });
-});
+    res.send(todos);
+  });
 
+});
 //addTodoにpostアクセスした時にToDoスキーマにデータをinsert
 app.post('/addTodo',function(req,res,next){
   var content = req.body.content;
@@ -107,40 +105,29 @@ app.post('/addTodo',function(req,res,next){
   var checkB = 0;
   console.log('{limit:'+limit+',listId:'+listId+',content:'+content+'}');
   if(content && listId && limit){
-    //取得したデータを挿入する。
-    var step1 = function(callback){
-    	  todo.content = content;
-          todo.limitDate = limit;
-          todo.listId = listId;
+    
+      todo.content = content;
+      todo.limitDate = limit;
+      todo.listId = listId;
 
 
-          //todoが空でもtitleが取得出来るようにとTop画面で直近の期限を表示出来るように
-          List.find({listId:listId},function(err,up){
-          todo.title = up[0].title;
-          });
-          todo.title;
-          todo.save();
+      //todoが空でもtitleが取得出来るようにとTop画面で直近の期限を表示出来るように
+      List.find({listId:listId},function(err,up){
+      todo.title = up[0].title;
+      });
+      todo.title;
+      todo.save();
 
-          console.log("step1"+true);
-          console.log('{limit:'+limit+',listId:'+listId+',content:'+content+'}');
-          setTimeout(callback,300);
-    }
-    //期限が一番近いものかどうかのチェック。
-var step2 = function(callback){
-	      Todo.find({listId:listId},function(err,up){
-
+      Todo.find({listId:listId},function(err,up){
         if(up.length>0){
         checkA = up[0].limitDate;
-        checkA = new Date(checkA);
-        List.update({listId:listId},{most:limit},{upsert:true},function(err){
-        });
         if(up.length>1){
         checkB = up[1].limitDate;
-        checkB = new Date(checkB);
       }
+        checkA = new Date(checkA);
+        checkB = new Date(checkB);
         for(var i=0;i<up.length;i++){
           if(up[i].isCheck == false){
-            console.log(up[i].isCheck);
             checkA = up[i].limitDate;
             checkA = new Date(checkA);
             if(checkA<checkB){
@@ -150,7 +137,7 @@ var step2 = function(callback){
         }
     }
 });
-//登録されたtodoのチェックしたのが近ければtrue,そうでなければfalse
+//期限
       List.find({listId:listId},function(err,up){
         var limitDate = new Date(limit);
         console.log("limitDate="+limitDate);
@@ -164,16 +151,11 @@ var step2 = function(callback){
         });
       }
       });
-      console.log("step2:"+true);
-      setTimeout(callback,100);
-}
-
-var step3 = function(callback){
-//登録された数の取得。
-	  Todo.find({listId:listId},function(err,todoSum){
-      console.log("aaaaaaaaaaaaaaaa");
-      console.log(todoSum.length);
-  var sums = todoSum.length;
+      res.send(true);
+  //todoが追加された時にlistの合計値を更新する。
+  Todo.find({listId:listId},function(err,todoSum){
+    if(todoSum.length > 0){
+  var sums = todoSum.length + 1;
 
 
   //最終更新日の取得
@@ -191,21 +173,14 @@ var step3 = function(callback){
    List.update({listId:listId},{$set:{sum:sums,lastUpDate:newCreate,checkSum:checkSum}},function (err){
    });
 
-});
-console.log("step3:"+true);
-setTimeout(callback,100);
+ }else{
+   //初回投稿時のみデータを手動で挿入。
+   var now = new Date();
+    List.update({listId:listId},{$set:{sum:1,lastUpDate:now,most:limit}},function (err){
+    });
 
-}
-  step1(function(){
-    console.log("step1だよ");
-    step2(function(){
-      step3(function(){
-        console.log('完了');
-        res.send(true);
-      })
-    })
+ }
   });
-
   }else{
     res.send(false);
   }
@@ -213,21 +188,18 @@ setTimeout(callback,100);
 
 
 app.post('/update',function(req,res){
+
+
 //checkboxにチェックが入った時にfalseからtrueにupdateする。
-var checkStep1 = function(callback){
   var checkDate = req.body.checked;
 
   // console.log('fuck!');
   // console.log(checkDate);
   for(var i=0;i<checkDate.length;i++){
-    Todo.update({todoId:checkDate[i]},{$set:{isCheck:true}},function(err){
-    });
-  }
-  setTimeout(callback,100);
+  Todo.update({todoId:checkDate[i]},{$set:{isCheck:true}},function(err){
+});
 }
-
 //チェックされた数を更新する。押されたタイミングでは0で挿入されてしまうので、初期値を１に設定。
-var checkStep2 = function(callback){
   var listId = req.body.listId;
   Todo.find({listId:listId},function(err,checks){
     var checkSum = 0;
@@ -239,12 +211,7 @@ var checkStep2 = function(callback){
      List.update({listId:listId},{$set:{checkSum:checkSum}},function (err){
      });
   });
-  setTimeout(callback,100);
-}
-  checkStep1(function(){
-    checkStep2(function(){
-    });
-  });
+
 });
 
 app.post('/change',function(req,res){
@@ -293,27 +260,6 @@ app.post('/getTitle',function(req,res){
   var ids = req.body.title;
   List.find({listId:ids},function(err,title){
     res.send(title);
-  });
-});
-
-//投稿内容の重複チェック。問題なければtrueを返す。
-app.post('/addCheck',function(req,res){
-  var content = req.body.content;
-  var listId = req.body.listId;
-  var limit = req.body.limit;
-  console.log("addCheckMoved");
-  Todo.find({},function(err,checks){
-      if(checks.length>0){
-        Todo.find({$and:[{listId:listId},{content:content},{limitDate:limit}]},function(err,checks){
-          if(checks.length>0){
-            res.send(false);
-          }else{
-            res.send(true);
-          }
-        });
-      }else{
-        res.send(true);
-      }
   });
 });
 
