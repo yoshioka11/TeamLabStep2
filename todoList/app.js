@@ -54,7 +54,6 @@ listSchema.plugin(autoIncrement.plugin, {model:'List',field:'listId'});
 mongoose.model('List',listSchema);
 var List = mongoose.model('List');
 var Todo = mongoose.model('Todo');
-
 //最後にtodoが作成された順に表示するためのsort
 app.get('/lists',function(req,res){
   List.find({},null,{sort:{lastUpDate: -1}},function(err,lists){
@@ -72,6 +71,7 @@ app.get('/search',post.searchTodo);
 
 //postでbListのリクエストが来た時にデータベースに各データを挿入するためのコード
 app.post('/addList',function(req,res){
+  var firstData = new Date();
   var list = new List();
   var title = req.body.name;
   if(title){
@@ -104,7 +104,7 @@ app.post('/addTodo',function(req,res,next){
   var todo = new Todo();
   var checkA = 0;
   var checkB = 0;
-  console.log('{limit:'+limit+',listId:'+listId+',content:'+content+'}');
+
   if(content && listId && limit){
     //取得したデータを挿入する。
     var step1 = function(callback){
@@ -120,23 +120,13 @@ app.post('/addTodo',function(req,res,next){
           var test = new Date(limit);
           List.update({listId:listId},{$set:{most:test}},function(err){
               });
-          console.log("step1"+true);
-          console.log('{limit:'+limit+',listId:'+listId+',content:'+content+'}');
-          setTimeout(callback,300);
+          setTimeout(callback,10);
     }
     //期限が一番近いものかどうかのチェック。
 var step2 = function(callback){
-        /*これはなぜか正常に動かない。
-        List.update({listId:listId},{most:limit},{upsert:true},function(err){
-        });
-        */
+
 	      Todo.find({listId:listId},function(err,up){
         if(up.length>0){
-        console.log("ここウギてる？");
-        /*これはなぜか正常に動かない。
-        List.update({listId:listId},{most:limit},{upsert:true},function(err){
-        });
-        */
         checkA = up[0].limitDate;
         checkA = new Date(checkA);
         console.log("checkA"+checkA);
@@ -159,12 +149,10 @@ var step2 = function(callback){
     }
 
 });
-//登録されたtodoのチェックしたのが近ければtrue,そうでなければfalse
+//登録されたtodoのlimit近ければtrue,そうでなければfalse
       List.find({listId:listId},function(err,up){
         var limitDate = new Date(limit);
-        console.log("limitDate="+limitDate);
-        console.log("limit="+limit);
-        console.log("ce"+checkB);
+
         if(checkB > limitDate){
           //これも正常に動く。
             List.update({listId:listId},{most:limitDate},{upsert:true},function(err){
@@ -176,14 +164,12 @@ var step2 = function(callback){
         }
       });
       console.log("step2:"+true);
-      setTimeout(callback,100);
+      setTimeout(callback,10);
 }
 
 var step3 = function(callback){
 //登録された数の取得。
 	  Todo.find({listId:listId},function(err,todoSum){
-      console.log("aaaaaaaaaaaaaaaa");
-      console.log(todoSum.length);
   var sums = todoSum.length;
 
 
@@ -209,14 +195,12 @@ var step3 = function(callback){
 }
 });
 console.log("step3:"+true);
-setTimeout(callback,100);
+setTimeout(callback,10);
 
 }
   step1(function(){
-    console.log("step1だよ");
     step2(function(){
       step3(function(){
-        console.log('完了');
         res.send(true);
       })
     })
@@ -239,10 +223,9 @@ var checkStep1 = function(callback){
     Todo.update({todoId:checkDate[i]},{$set:{isCheck:true}},function(err){
     });
   }
-  setTimeout(callback,100);
+  setTimeout(callback,10);
 }
 
-//チェックされた数を更新する。押されたタイミングでは0で挿入されてしまうので、初期値を１に設定。
 var checkStep2 = function(callback){
   var listId = req.body.listId;
   Todo.find({listId:listId},function(err,checks){
@@ -255,35 +238,100 @@ var checkStep2 = function(callback){
      List.update({listId:listId},{$set:{checkSum:checkSum}},function (err){
      });
   });
-  setTimeout(callback,100);
+  setTimeout(callback,10);
+}
+//チェックされたTodoが直近の期限だった場合、除外しtop画面の表示する期限を更新する。
+var checkStep3 = function(callback){
+  var listId = req.body.listId;
+  console.log(listId);
+  Todo.find({listId: listId},{},{sort:{limitDate: 1}},function(err,checks){
+    for(var i=0;i<checks.length;i++){
+      console.log(checks[i].limitDate+checks[i].isCheck);
+      var most = new Date(checks[i].limitDate);
+      if(!(checks[i].isCheck)){
+        //上記でsortしているのでチェックされていない直近のデータを見つけた時点でbreakする.
+        List.update({listId: listId},{$set:{most: most}},function(err){
+        });
+        break;
+      }
+    }
+  });
+  setTimeout(callback,10);
+}
+
+var checkStep4 = function(){
+  var listId = req.body.listId;
+  var checkSum = 0;
+  var sum = 0;
+  console.log(listId);
+    List.find({listId: listId},function(err,checks){
+    checkSum = checks[0].checkSum;
+    sum = checks[0].sum;
+    console.log("checkSum:"+checkSum+"\nsum:"+sum);
+    if(checkSum == sum){
+      List.update({listId: listId},{$set:{most: null}},function(err){
+          console.log('all checked');
+        });
+    }
+  });
 }
   checkStep1(function(){
     checkStep2(function(){
+      checkStep3(function(){
+        checkStep4(function(){
+
+        });
+      });
     });
   });
 });
 
 app.post('/change',function(req,res){
+
 //checkboxにチェックがはずれたときににtrueからfalseにupdateする。
+var checkSum = 0;
+var listId = req.body.listId;
+var chengeStep1 = function(callback){
   var checkDate = req.body.checked;
-  // console.log('fuck!');
-  // console.log(checkDate);
   for(var i=0;i<checkDate.length;i++){
   Todo.update({todoId:checkDate[i]},{$set:{isCheck:false}},function(err){
-});
+  });
+  }
+
+  setTimeout(callback,50);
 }
-//チェックされた数を更新する。
-  var listId = req.body.listId;
-  Todo.find({listId:listId},function(err,checks){
-    var checkSum = 0;
+var chengeStep2 = function(callback){
+  //チェックされたら引く
+  var update = 0;
+  List.find({listId:listId},function(err,check){
+    update = check[0].checkSum;
+    update = update-1;
+    console.log("updateから１弾いた数"+update);
+    List.update({listId:listId},{$set:{checkSum:update}},function (err){
+    });
+  });
+  Todo.find({listId: listId},{},{sort:{limitDate: 1}},function(err,checks){
+    console.log('chenge動いてるよー');
     for(var i=0;i<checks.length;i++){
-      if(checks[i].isCheck === true){
-        checkSum++;
+      console.log(checks[i].limitDate+checks[i].isCheck);
+      var most = new Date(checks[i].limitDate);
+      if(!(checks[i].isCheck)){
+        console.log(checks[i].todoId);
+        //上記でsortしているのでチェックされていない直近のデータを見つけた時点でbreakする.
+        List.update({listId: listId},{$set:{most: most}},function(err){
+          console.log("chenged most update");
+        });
+        break;
       }
     }
-     List.update({listId:listId},{$set:{checkSum:checkSum}},function (err){
-     });
   });
+
+}
+chengeStep1(function(){
+  chengeStep2(function(){
+
+  });
+});
 
 });
 
@@ -311,7 +359,6 @@ app.post('/getTitle',function(req,res){
     res.send(title);
   });
 });
-
 //投稿内容の重複チェック。問題なければtrueを返す。
 app.post('/addCheck',function(req,res){
   var content = req.body.content;

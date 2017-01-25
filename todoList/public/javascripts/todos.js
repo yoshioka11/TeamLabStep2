@@ -77,14 +77,17 @@ function addTodo(){
   var content = $('#content').val();
   var limit = new Date($('#limit').val());
   console.log(content.length);
-  //投稿前に重複していないかのチェック。
+  //文字数チェック
 if(content.length<31 && content.length > 0){
-  console.log("動いてる1");
+  //投稿前に重複していないかのチェック。
   $.post('/addCheck',{listId:listId,content:content,limit:limit},function(res){
-    console.log("動いてる2");
       if(res){
+        //チェックが通ればvalueを空に addpostにデータを送信
+
         $.post('/addTodo',{content:content,limit:limit,listId:listId},function(res){
               console.log(res);
+              $('#content').val('');
+              $('#limit').val('');
               getTodo();
           });
       }else{
@@ -135,7 +138,6 @@ function change(){
 }
   console.log(chekers+"を送信します。");
   $.post('/change',{checked:chekers,listId:listId},function(req,res){
-    getTodo();
   });
     getTodo();
 }
