@@ -10,5 +10,10 @@ ul{
   list-style: none;
 }
 #nan{
-  
+}
+li{
+  border: 1px solid;
+  color: red;
+  height: 70px;
+  width: 400px;
 }

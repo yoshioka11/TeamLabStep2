@@ -23,6 +23,9 @@ function getList(){
         //日付がないものはtodoがないと表示する。
         if(!(Number(mostYear))){
           $list.append('<li><a href="/todo/id='+ list.listId +'">'+ valueEscape(list.title) + '</a><br><span>ToDoがありません。</span></li>');
+        }else if (mostYear == 1970){
+          //DBがDate型なのでnullにしていると最低年1970が入るのでデータはあるがチェックされていないものない場合は直近のTodoがありませんと表示させる。
+          $list.append('<li><a href="/todo/id='+ list.listId +'">'+ valueEscape(list.title) + '</a><br><span>'+list.sum+'個中'+list.checkSum+'個がチェック済</span><br>直近のToDoはありません。</li>');
         }else{
           $list.append('<li><a href="/todo/id='+ list.listId +'">'+ valueEscape(list.title) + '</a><br><span>'+list.sum+'個中'+list.checkSum+'個がチェック済</span><br>~'+mostYear+'年'+mostMonth+'月'+mostDate+'日</li>');
         }
@@ -47,7 +50,7 @@ function postList(){
       $.post('/addList', {name: name}, function(res){
         $('#newAdd').text("新しいリストを追加しました。");
         console.log(res);
-        getList();
+        setTimeout(getList,400);
       });
   }else{
     $('#newAdd').text("Listのタイトルは30文字以内で設定してください。");
